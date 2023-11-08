@@ -1,0 +1,10 @@
+auth/node_modules
+project/node_modules
+scheduler/node_modules
+product/node_modules
+location/node_modules
+category/node_modules
+gateway/node_modules
+site/node_modules
+building/node_modules
+.

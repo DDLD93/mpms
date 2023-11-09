@@ -1,5 +1,5 @@
 const ProjectModel = require("../model/project.model");
-const rp = require('request-promise');
+const http = require('http');
 const { schedulerURL, app } = require('../config');
 
 class ProjectController {
@@ -96,22 +96,53 @@ async function addToScheduler(milestones) {
 }
 
 
-function makePostRequest(data) {
-  return new Promise(async (resolve, reject) => {
-    try {
+
+
+
+    function makePostRequest(data) {
+      return new Promise((resolve, reject) => {
+        // Create the request options
         const options = {
-            method: 'POST',
-            uri: schedulerURL,
-            body: data,
-            json: true
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         };
-        let res = await rp(options);
-        resolve(res);
-    } catch (err) {
-        reject(err);
-    }
-});
-    };
+    
+        // Create the HTTP request
+        const req = http.request(schedulerURL, options, (res) => {
+          let responseBody = '';
+    
+          // Collect the response data
+          res.on('data', (chunk) => {
+            responseBody += chunk;
+          });
+    
+          // Handle the response
+          res.on('end', () => {
+            if (res.statusCode === 200) {
+              try {
+                const parsedResponse = JSON.parse(responseBody);
+                resolve(parsedResponse);
+              } catch (error) {
+                reject(error);
+              }
+            } else {
+              reject(`Request failed with status code ${res.statusCode}`);
+            }
+          });
+        });
+    
+        // Handle errors during the request
+        req.on('error', (error) => {
+          reject(error);
+        });
+    
+        // Send the request with the data
+        req.write(JSON.stringify(data));
+        req.end();
+      });
+    }    
 
  
     
@@ -132,6 +163,23 @@ function makePostRequest(data) {
       //       return { ok: false, message: error.message }
       //   }
       // }
+
+      // function makePostRequest(data) {
+//   return new Promise(async (resolve, reject) => {
+//     try {
+//         const options = {
+//             method: 'POST',
+//             uri: schedulerURL,
+//             body: data,
+//             json: true
+//         };
+//         let res = await rp(options);
+//         resolve(res);
+//     } catch (err) {
+//         reject(err);
+//     }
+// });
+//     };
 
 
 

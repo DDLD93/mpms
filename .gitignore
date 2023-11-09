@@ -1,6 +1,7 @@
 auth/node_modules
 project/node_modules
 scheduler/node_modules
+nin/node_modules
 product/node_modules
 location/node_modules
 category/node_modules

@@ -1,9 +1,13 @@
-FROM node:alpine
-LABEL Khalil Mohammed Shams <shamskhalil@gmail.com>
-WORKDIR /usr/src/app
-COPY package*.json ./
+FROM node:slim
+WORKDIR /app
+
+# Install app dependencies
+COPY package.json .
 RUN npm install
-COPY src ./
-CMD ["node", "server.js"]
-EXPOSE 9000
+
+# Bundle app source
+COPY . .
+
+EXPOSE 3000
+CMD [ "npm", "start"]
 

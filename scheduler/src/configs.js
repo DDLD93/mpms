@@ -11,7 +11,7 @@ const {
 
 module.exports = {
   app: {
-    port: APP_PORT || 9000
+    port: APP_PORT || 3000
   },
   redis: {
     host: "redisdb",

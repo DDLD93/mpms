@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { mongoUri } = require("../config").app
+const { mongoUrl } = require("../config").app
 module.exports = () => {
     let options = {
         useNewUrlParser: true,
@@ -22,7 +22,7 @@ module.exports = () => {
     db.on('disconnect', () => {
         console.log('Oops we are disconnected from mongodb');
         // retry logic
-        mongoose.connect(mongoUri,options);
+        mongoose.connect(mongoUrl,options);
     });
-    mongoose.connect(mongoUri,options);
+    mongoose.connect(mongoUrl,options);
 }

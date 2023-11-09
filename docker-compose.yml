@@ -1,0 +1,107 @@
+services:
+  project:
+    build: ./project
+    restart: always
+    depends_on:
+      - mongodb
+    labels:
+      - traefik.port=3000
+      - traefik.frontend.rule=PathPrefix:/api/v1/project
+      - traefik.enable=true
+      - traefik.docker.network=frontnet
+    environment:
+      APP_PORT: "${APP_PORT}"
+      SCHEDULER_URL: "${SCHEDULER_URL}"
+      APP_DOMAIN: "${APP_DOMAIN}"
+      APP_MONGO_URI: "${APP_MONGO_URI}"
+    networks:
+      - frontnet
+    volumes:
+      - $PWD/STORAGE/uploads:/app/src/uploads
+  auth:
+    build: ./auth
+    restart: always
+    depends_on:
+      - mongodb
+    labels:
+      - traefik.frontend.rule=PathPrefix:/api/v1/auth
+      - traefik.port=3000
+      - traefik.enable=true
+      - traefik.docker.network=frontnet
+    networks:
+      - frontnet
+    environment:
+      APP_PORT: "${APP_PORT}"
+      APP_MONGO_URI: "${APP_MONGO_URI}"
+      JWT_SECRET: "${JWT_SECRET}"
+  
+  # scheduler:
+  #   build: ./scheduler
+  #   restart: always
+  #   depends_on:
+  #     - mongodb
+  #   labels:
+  #     - traefik.frontend.rule=PathPrefix:/api/v1/scheduler
+  #     - traefik.port=3000
+  #     - traefik.enable=true
+  #     - traefik.docker.network=frontnet
+  #   networks:
+  #     - frontnet
+  #   environment:
+  #     APP_PORT: "${APP_PORT}"
+  #     APP_RABBITMQ_URL: "${APP_RABBITMQ_URL}"
+  #     APP_MONGODB_URL: "${APP_MONGODB_URL}"
+  # nin:
+  #   build: ./nin
+  #   restart: always
+  #   depends_on:
+  #     - mongodb
+  #   labels:
+  #     - traefik.frontend.rule=PathPrefix:/api/v1/nin
+  #     - traefik.port=3000
+  #     - traefik.enable=true
+  #     - traefik.docker.network=frontnet
+  #   networks:
+  #     - frontnet
+  #   environment:
+  #     APP_PORT: "${APP_PORT}"
+  #     APP_RABBITMQ_URL: "${APP_RABBITMQ_URL}"
+  #     APP_MONGODB_URL: "${APP_MONGODB_URL}"
+  #   volumes:
+  #     - $PWD/STORAGE/uploads:/app/src/uploads
+  mongodb:
+    container_name: mongodb
+    image: mongo:6.0.2
+    restart: always
+    labels:
+      - traefik.enable=false
+      - traefik.docker.network=app_frontnet
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS}
+    networks:
+      - frontnet
+    volumes:
+      - $PWD/STORAGE/mongodb:/data/db
+  traefik:
+     container_name: traefik
+     image: traefik:1.7.6-alpine
+     restart: always
+     command: --docker
+     environment:
+      DO_AUTH_TOKEN: dop_v1_70ceb35c0e60f8f7e355bcb30d3f919c2fbcb31223e076b2a0ef34cd1fe1e60a
+     labels:
+      #  - traefik.frontend.rule=Host:monitor.feims.ng
+       - traefik.port=8080
+       - traefik.enable=true
+       - traefik.docker.network=app_frontnet
+     volumes:
+       - /var/run/docker.sock:/var/run/docker.sock
+       - $PWD/STORAGE/traefik/traefik.toml:/etc/traefik/traefik.toml
+     ports:
+       - 3000:80
+     networks:
+       - frontnet
+
+networks:
+  frontnet:

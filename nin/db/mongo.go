@@ -18,7 +18,6 @@ func init() {
 }
 
 func StartMongo() *mongo.Client {
-    // Create a context with a 10-second timeout
     ctx, _ := context.WithTimeout(context.Background(), 20*time.Second)
 
     client, err := mongo.Connect(ctx, options.Client().ApplyURI(uri))

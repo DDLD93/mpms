@@ -2,7 +2,6 @@ const UPLOADS = __dirname + '/uploads';
 require('./connection/mongo.connection')();
 const express = require("express");
 const cors = require('cors');
-require('dotenv').config();
 const { port } = require("./config").app
 
 const app = express()

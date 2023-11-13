@@ -1,5 +1,6 @@
 const ProjectModel = require("../model/project.model");
 const http = require('http');
+const rb = require("../connection/rb.connection")
 const { schedulerURL, app } = require('../config');
 
 class ProjectController {
@@ -27,8 +28,10 @@ class ProjectController {
       const newProject = new ProjectModel(data)
       let milestones = data.milestones
       const project = await newProject.save()
-      await addToScheduler(milestones)
-      
+      // sending proect to queue
+      await rb.queueJob(project)
+      // await addToScheduler(milestones)
+
       return { ok: true, data: project };
     } catch (err) {
       return { ok: false, message: err.message };
@@ -36,7 +39,6 @@ class ProjectController {
   }
 
   async addDocumentToMilestone(projectId, milestoneId, newData) {
-    console.log({ projectId, milestoneId, newData })
     try {
       const project = await ProjectModel.findById(projectId);
       if (!project) {
@@ -61,37 +63,80 @@ class ProjectController {
       return { ok: false, message: err.message };
     }
   }
-  
+
 
 }
 
 module.exports = new ProjectController();
 
+function makePostRequest(data) {
+  return new Promise((resolve, reject) => {
+    // Create the request options
+    const options = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
 
+    // Create the HTTP request
+    const req = http.request(schedulerURL, options, (res) => {
+      let responseBody = '';
+
+      // Collect the response data
+      res.on('data', (chunk) => {
+        responseBody += chunk;
+      });
+
+      // Handle the response
+      res.on('end', () => {
+        if (res.statusCode === 200) {
+          try {
+            const parsedResponse = JSON.parse(responseBody);
+            resolve(parsedResponse);
+          } catch (error) {
+            reject(error);
+          }
+        } else {
+          reject(`Request failed with status code ${res.statusCode}`);
+        }
+      });
+    });
+
+    // Handle errors during the request
+    req.on('error', (error) => {
+      reject(error);
+    });
+
+    // Send the request with the data
+    req.write(JSON.stringify(data));
+    req.end();
+  });
+}
 async function addToScheduler(milestones) {
   let promiseArr = []
 
   try {
-      milestones.map(milestone => {
-         let date = milestone.endDate            
+    milestones.map(milestone => {
+      let date = milestone.endDate
 
-          let meta = {
-              projectId: "",
-              milestoneId: "",
-              description: "milestone expiration",
-          }
-          let schedulerObj = {
-              date: date,
-              time: "09:00:00",
-              callbackUrl: `${app.domain}/api/v1/project/scheduler/callback`,
-          }
-          promiseArr.push(makePostRequest({ ...schedulerObj, meta }))
-      });
-      let result = await Promise.all(promiseArr)
-      // console.log({ result })
+      let meta = {
+        projectId: "",
+        milestoneId: "",
+        description: "milestone expiration",
+      }
+      let schedulerObj = {
+        date: date,
+        time: "09:00:00",
+        callbackUrl: `${app.domain}/api/v1/project/scheduler/callback`,
+      }
+      promiseArr.push(makePostRequest({ ...schedulerObj, meta }))
+    });
+    let result = await Promise.all(promiseArr)
+    // console.log({ result })
   } catch (error) {
-      console.log(error.message)
-      return Promise.reject(promiseArr)
+    console.log(error.message)
+    return Promise.reject(promiseArr)
   }
 }
 
@@ -99,87 +144,6 @@ async function addToScheduler(milestones) {
 
 
 
-    function makePostRequest(data) {
-      return new Promise((resolve, reject) => {
-        // Create the request options
-        const options = {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        };
-    
-        // Create the HTTP request
-        const req = http.request(schedulerURL, options, (res) => {
-          let responseBody = '';
-    
-          // Collect the response data
-          res.on('data', (chunk) => {
-            responseBody += chunk;
-          });
-    
-          // Handle the response
-          res.on('end', () => {
-            if (res.statusCode === 200) {
-              try {
-                const parsedResponse = JSON.parse(responseBody);
-                resolve(parsedResponse);
-              } catch (error) {
-                reject(error);
-              }
-            } else {
-              reject(`Request failed with status code ${res.statusCode}`);
-            }
-          });
-        });
-    
-        // Handle errors during the request
-        req.on('error', (error) => {
-          reject(error);
-        });
-    
-        // Send the request with the data
-        req.write(JSON.stringify(data));
-        req.end();
-      });
-    }    
-
- 
-    
-
-
-
-
-
-    // async function makePostRequest(data) {
-      //   try {
-      //       const response = await axios.post(schedulerURL, data);
-      //       if (response.status >= 200 && response.status < 300) {
-      //           return { ok: true, data: response.data }
-      //       } else {
-      //           throw new Error(`Request failed with status ${response.status}`);
-      //       }
-      //   } catch (error) {
-      //       return { ok: false, message: error.message }
-      //   }
-      // }
-
-      // function makePostRequest(data) {
-//   return new Promise(async (resolve, reject) => {
-//     try {
-//         const options = {
-//             method: 'POST',
-//             uri: schedulerURL,
-//             body: data,
-//             json: true
-//         };
-//         let res = await rp(options);
-//         resolve(res);
-//     } catch (err) {
-//         reject(err);
-//     }
-// });
-//     };
 
 
 

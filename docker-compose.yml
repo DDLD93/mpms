@@ -4,6 +4,8 @@ services:
     restart: always
     depends_on:
       - mongodb
+      - rabbitmq
+
     labels:
       - traefik.port=3000
       - traefik.frontend.rule=PathPrefix:/api/v1/project
@@ -14,6 +16,8 @@ services:
       SCHEDULER_URL: "${SCHEDULER_URL}"
       APP_DOMAIN: "${APP_DOMAIN}"
       APP_MONGO_URI: "${APP_MONGO_URI}"
+      APP_RABBITMQ_URL: "${APP_RABBITMQ_URL}"
+      PROJECT_ONBOARDING_QUEUE_NAME: "${PROJECT_ONBOARDING_QUEUE_NAME}"
     networks:
       - frontnet
     volumes:
@@ -34,6 +38,20 @@ services:
       APP_PORT: "${APP_PORT}"
       APP_MONGO_URI: "${APP_MONGO_URI}"
       JWT_SECRET: "${JWT_SECRET}"
+  projectworker:
+    build: ./projectWorker
+    restart: always
+    depends_on:
+      - rabbitmq
+    labels:
+      - traefik.enable=false
+      - traefik.docker.network=frontnet
+    environment:
+      SCHEDULER_URL: "${SCHEDULER_URL}"
+      APP_RABBITMQ_URL: "${APP_RABBITMQ_URL}"
+      PROJECT_ONBOARDING_QUEUE_NAME: "${PROJECT_ONBOARDING_QUEUE_NAME}"
+    networks:
+      - frontnet 
   
   # scheduler:
   #   build: ./scheduler
@@ -51,24 +69,23 @@ services:
   #     APP_PORT: "${APP_PORT}"
   #     APP_RABBITMQ_URL: "${APP_RABBITMQ_URL}"
   #     APP_MONGODB_URL: "${APP_MONGODB_URL}"
-  # nin:
-  #   build: ./nin
-  #   restart: always
-  #   depends_on:
-  #     - mongodb
-  #   labels:
-  #     - traefik.frontend.rule=PathPrefix:/api/v1/nin
-  #     - traefik.port=3000
-  #     - traefik.enable=true
-  #     - traefik.docker.network=frontnet
-  #   networks:
-  #     - frontnet
-  #   environment:
-  #     APP_PORT: "${APP_PORT}"
-  #     APP_RABBITMQ_URL: "${APP_RABBITMQ_URL}"
-  #     APP_MONGODB_URL: "${APP_MONGODB_URL}"
-  #   volumes:
-  #     - $PWD/STORAGE/uploads:/app/src/uploads
+  nin:
+    build: ./nin
+    restart: always
+    depends_on:
+      - mongodb
+    labels:
+      - traefik.frontend.rule=PathPrefix:/api/v1/nin
+      - traefik.port=3000
+      - traefik.enable=true
+      - traefik.docker.network=frontnet
+    networks:
+      - frontnet
+    environment:
+      APP_PORT: "${APP_PORT}"
+      APP_MONGO_URI: "${APP_MONGO_URI}"
+    volumes:
+      - $PWD/STORAGE/uploads:/app/src/uploads
   mongodb:
     container_name: mongodb
     image: mongo:6.0.2
@@ -83,6 +100,25 @@ services:
       - frontnet
     volumes:
       - $PWD/STORAGE/mongodb:/data/db
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management-alpine
+    hostname: rabbitmq
+    restart: always
+    ports:
+      - 15672:15672
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=frontnet
+      - traefik.port=15672
+    volumes:
+      - ./STORAGE/rabbitmq/:/var/lib/rabbitmq/
+      - ./STORAGE/rabbitmq/logs/:/var/log/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    networks:
+      - frontnet    
   traefik:
      container_name: traefik
      image: traefik:1.7.6-alpine
@@ -91,7 +127,6 @@ services:
      environment:
       DO_AUTH_TOKEN: dop_v1_70ceb35c0e60f8f7e355bcb30d3f919c2fbcb31223e076b2a0ef34cd1fe1e60a
      labels:
-      #  - traefik.frontend.rule=Host:monitor.feims.ng
        - traefik.port=8080
        - traefik.enable=true
        - traefik.docker.network=app_frontnet

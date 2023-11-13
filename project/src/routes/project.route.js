@@ -31,7 +31,6 @@ module.exports = (UPLOADS) => {
   api.post("/", upload.fields([{ name: "document" }]), async (req, res) => {
     const body = JSON.parse(req.body.meta)
     body.documents = req.filePaths || []
-    console.log("body >>>", body)
     let { ok, data, message } = await ProjectCtrl.addProject(body);
     if (ok) {
       res.status(201).json({ ok, data });

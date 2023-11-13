@@ -1,0 +1,28 @@
+const {
+    APP_PORT,
+    MICROSERVICE_PROJECT,
+    MICROSERVICE_AUTH,
+    MICROSERVICE_SCHEDULER,
+    MICROSERVICE_NIN,
+    JWT_SECRET,
+
+} = process.env;
+
+module.exports = {
+
+    app: {
+        port: APP_PORT || 3000,
+        jwtSecret: JWT_SECRET
+    },
+    services: {
+        MICROSERVICE_PROJECT: MICROSERVICE_PROJECT,
+        MICROSERVICE_AUTH: MICROSERVICE_AUTH,
+        MICROSERVICE_NIN: MICROSERVICE_NIN,
+        MICROSERVICE_SCHEDULER: MICROSERVICE_SCHEDULER,
+
+    }
+
+
+
+}
+

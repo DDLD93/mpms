@@ -14,7 +14,8 @@ app.use(express.json())
 
 // connecting to database 
 
-app.use("/api/v1/auth", require("./routes/user.route")(express));
+app.use("/api/v1/auth", require("./routes/auth.route"));
+app.use("/api/v1/user", require("./routes/user.route"));
 
 
 app.listen(port,()=>{

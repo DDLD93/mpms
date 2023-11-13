@@ -18,7 +18,7 @@ app.use('/api/v1/auth', createProxyMiddleware({ target: `${services.MICROSERVICE
 
 // private 
 app.use(verifyToken)
-app.use('/api/v1/nin', createProxyMiddleware({ target: `${services.MICROSERVICE_AUTH}`, changeOrigin: true }))
+app.use('/api/v1/nin', createProxyMiddleware({ target: `${services.MICROSERVICE_NIN}`, changeOrigin: true }))
 app.use('/api/v1/project', createProxyMiddleware({ target: `${services.MICROSERVICE_PROJECT}`, changeOrigin: true }))
 app.use('/api/v1/user', createProxyMiddleware({ target: `${services.MICROSERVICE_AUTH}`, changeOrigin: true }))
 

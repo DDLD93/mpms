@@ -10,7 +10,7 @@ func GetRouter() *mux.Router {
 	api.Use(middlewares.JsonMiddleware)
 
 
-	api.HandleFunc("/api/v1/nin/fetch", GetNIN).Methods("POST")
-	api.HandleFunc("/api/v1/nin", AddNIN).Methods("POST")
+	api.HandleFunc("/api/v1/nin/validate", GetNIN).Methods("POST")
+	api.HandleFunc("/api/v1/nin", middlewares.FileUpload("photo",AddNIN)).Methods("POST")
 	return api
 }

@@ -11,7 +11,7 @@ module.exports = {
     app: {
         port: APP_PORT || 3000,
         domain: APP_DOMAIN || "http://localhost:3000",
-        mongoUrl: APP_MONGO_URI || "mongodb://localhost:27017/mpms"
+        mongoUrl: APP_MONGO_URI || "mongodb://localhost:27017/mpms" 
     },
     endpoint: {
         rabbitmqUri: APP_RABBITMQ_URL || "",
